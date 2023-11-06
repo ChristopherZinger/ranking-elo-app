@@ -6,5 +6,9 @@
 			"region": "europe-west1",
 			"maxInstances": 1
 		}
+	},
+	"firestore": {
+		"rules": "firestore.rules",
+		"indexes": "firestore.indexes.json"
 	}
 }

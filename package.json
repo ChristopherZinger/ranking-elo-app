@@ -32,6 +32,7 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@firebase/auth": "^1.3.2",
 		"firebase": "^10.5.2",
 		"firestore": "^1.1.6",
 		"slugify": "^1.6.6",

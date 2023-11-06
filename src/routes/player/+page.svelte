@@ -18,13 +18,13 @@
 	let userDoc: undefined | Player | null;
 	let matches: undefined | Match[];
 
-	function onUserDocChange(user: Player) {
+	function onUserDocChange(player: Player) {
 		const app = getFirestore();
 		getDocs(
 			query(
 				collection(app, CollectionName.matches),
 				or(
-					where('winnerUniqueName', '==', user.uniqueName),
+					where('winnerUniqueName', '==', player.uniqueName),
 					where('looserUniqueName', '==', uniqueName)
 				),
 				orderBy('createdAtEpochS', 'desc')
@@ -64,7 +64,7 @@
 	loading
 {:else}
 	<h2>Player: {userDoc ? userDoc.displayName : '?'}</h2>
-	<ul style="padding: 0">
+	<ol reversed style="padding: 0">
 		{#if matches !== undefined}
 			{#if matches.length}
 				{#each matches || [] as game}
@@ -77,7 +77,11 @@
 							minute: '2-digit'
 						})} -
 						<b>{game.winnerUniqueName === userDoc.uniqueName ? 'won' : 'lost'}</b> against
-						<b> {game.looserUniqueName}</b>
+						<b>
+							{game.looserUniqueName === userDoc.uniqueName
+								? game.winnerUniqueName
+								: game.looserUniqueName}</b
+						>
 					</li>
 				{/each}
 			{:else}
@@ -86,5 +90,5 @@
 		{:else}
 			loading games
 		{/if}
-	</ul>
+	</ol>
 {/if}

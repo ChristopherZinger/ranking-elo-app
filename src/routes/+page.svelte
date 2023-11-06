@@ -3,21 +3,21 @@
 	import { onMount } from 'svelte';
 	import { orderBy, query, getFirestore, collection, getDocs } from '@firebase/firestore';
 
-	let users: undefined | Player[];
+	let players: undefined | Player[];
 
 	onMount(() => {
 		const app = getFirestore();
 		getDocs(query(collection(app, CollectionName.players), orderBy('elo', 'desc'))).then((r) => {
-			users = r.docs.map((s) => s.data() as Player);
+			players = r.docs.map((s) => s.data() as Player);
 		});
 	});
 </script>
 
-{#if users?.length}
+{#if players?.length}
 	<ol style="margin: 20px 0;">
-		{#each users as user}
+		{#each players as player}
 			<li style="margin-bottom: 15px;">
-				{user.elo} - <a href="/player?player-name={user.uniqueName}">{user.displayName}</a>
+				{player.elo} - <a href="/player?player-name={player.uniqueName}">{player.displayName}</a>
 			</li>
 		{/each}
 	</ol>

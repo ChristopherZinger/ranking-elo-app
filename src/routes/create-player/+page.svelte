@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CollectionName, type User } from '$lib/firebase/firebase-utils';
+	import { CollectionName, type Player } from '$lib/firebase/firebase-utils';
 	import { slugifyUserName } from '$lib/slugify';
 	import { runTransaction, collection, getFirestore, getDoc, doc } from '@firebase/firestore';
 
@@ -16,9 +16,8 @@
 		isTaken = false;
 		isLoading = true;
 
-		getDoc(doc(collection(app, CollectionName.users), id))
+		getDoc(doc(collection(app, CollectionName.players), id))
 			.then((r) => {
-				console.log(r.data(), r.exists());
 				if (r.exists()) {
 					isTaken = true;
 				}
@@ -36,7 +35,7 @@
 		const app = getFirestore();
 		const id = slugifyUserName(nameInputValue);
 
-		const user: User = {
+		const player: Player = {
 			uniqueName: id,
 			displayName: nameInputValue,
 			elo: 1200
@@ -44,12 +43,12 @@
 
 		let isLoading = true;
 		runTransaction(app, async (t) => {
-			const existingUser = await t.get(doc(collection(app, CollectionName.users), id));
+			const existingUser = await t.get(doc(collection(app, CollectionName.players), id));
 			if (existingUser.exists()) {
 				isTaken = true;
 				return;
 			}
-			t.set(doc(collection(app, CollectionName.users), id), user);
+			t.set(doc(collection(app, CollectionName.players), id), player);
 		})
 			.then((r) => {
 				success = true;
@@ -79,5 +78,5 @@
 		</div>
 	</form>
 {:else}
-	<div>user created: {nameInputValue}</div>
+	<div>player created: {nameInputValue}</div>
 {/if}
