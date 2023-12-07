@@ -7,6 +7,7 @@
 		getAuth,
 		type User
 	} from '@firebase/auth';
+	import '../app.css';
 
 	firebaseInit();
 
