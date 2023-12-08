@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { firebaseInit } from '$lib/firebase/config';
-	import { onMount } from 'svelte';
 	import {
 		signInWithEmailAndPassword,
 		onAuthStateChanged,
@@ -8,6 +7,10 @@
 		type User
 	} from '@firebase/auth';
 	import '../app.css';
+	import LoadingBox from '$lib/components/LoadingBox.svelte';
+	import Nav from '$lib/components/Nav.svelte';
+	import PageHeading from '$lib/components/PageHeading.svelte';
+	import Button from '$lib/components/Button.svelte';
 
 	firebaseInit();
 
@@ -35,47 +38,34 @@
 	onAuthStateChanged(auth, (u) => {
 		user = u || null;
 	});
-
-	onMount(() => {});
 </script>
 
 <div style="margin:0 15px;">
-	<div style="margin: 0 auto; max-width: 300px;">
-		<h1 style="text-align: center;">S11 ELO</h1>
+	<div style="margin: 0 auto; max-width: 300px; min-height: 100%;">
+		<Nav />
 		{#if user}
-			<nav style="margin-bottom: 40px">
-				<ul
-					style="display: flex; gap: 15px; justify-content: center; list-style: none; padding: 0;"
-				>
-					<li>
-						<a href="/">home</a>
-					</li>
-					<li>
-						<a href="/create-player">create player</a>
-					</li>
-					<li>
-						<a href="/create-match">register match</a>
-					</li>
-				</ul>
-			</nav>
 			<slot />
 		{:else if user === null}
-			<p>Welcome! This is s11 ping-pong ranking app.</p>
-			<img src={imgSrc} alt="cat-plays-table-tennis" width="300px" />
+			<PageHeading>Ping Poing</PageHeading>
+			<img class="rounded-md" src={imgSrc} alt="cat-plays-table-tennis" width="300px" />
 			<div style="margin: 15px 0;">
-				<label for="password">Password:</label>
-			</div>
-			<div style="margin: 15px 0;">
-				<input name="password" id="password" type="password" bind:value={password} />
+				<input
+					class="p-2 border-b-2 border-black w-full outline-none"
+					name="password"
+					id="password"
+					placeholder="Password"
+					type="password"
+					bind:value={password}
+				/>
 			</div>
 			{#if error}
 				<div style="margin: 15px 0;">ERROR: {error}</div>
 			{/if}
 			<div>
-				<button on:click={login} disabled={isLoading}>Enter</button>
+				<Button onClick={login} isDisabled={isLoading}>Enter</Button>
 			</div>
 		{:else}
-			loading
+			<LoadingBox />
 		{/if}
 	</div>
 </div>

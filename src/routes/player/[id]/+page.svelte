@@ -12,8 +12,10 @@
 		getDoc,
 		doc
 	} from '@firebase/firestore';
+	import LoadingBox from '$lib/components/LoadingBox.svelte';
+	import PageHeading from '$lib/components/PageHeading.svelte';
 
-	$: uniqueName = $page.url.searchParams.get('player-name');
+	$: uniqueName = $page.params.id;
 
 	let userDoc: undefined | Player | null;
 	let matches: undefined | Match[];
@@ -59,36 +61,34 @@
 </script>
 
 {#if userDoc === null}
-	<h2>404 Unknown player</h2>
-{:else if userDoc === undefined}
-	loading
+	<h2 class="text-center">404 Unknown player</h2>
+{:else if userDoc === undefined || matches === undefined}
+	<LoadingBox />
 {:else}
-	<h2>Player: {userDoc ? userDoc.displayName : '?'}</h2>
-	<ol reversed style="padding: 0">
-		{#if matches !== undefined}
-			{#if matches.length}
-				{#each matches || [] as game}
-					<li style="margin-bottom: 10px;">
-						{new Date(game.createdAtEpochS * 1000).toLocaleDateString('en-GB', {
-							year: 'numeric',
-							month: 'short',
-							day: 'numeric',
-							hour: '2-digit',
-							minute: '2-digit'
-						})} -
+	<PageHeading>{userDoc.displayName}</PageHeading>
+	<ol class="flex flex-col gap-5">
+		{#if matches.length}
+			{#each matches || [] as game}
+				<li class="border-b-2 border-black">
+					{new Date(game.createdAtEpochS * 1000).toLocaleDateString('en-GB', {
+						year: 'numeric',
+						month: 'short',
+						day: 'numeric',
+						hour: '2-digit',
+						minute: '2-digit'
+					})}
+					<div>
 						<b>{game.winnerUniqueName === userDoc.uniqueName ? 'won' : 'lost'}</b> against
 						<b>
 							{game.looserUniqueName === userDoc.uniqueName
 								? game.winnerUniqueName
 								: game.looserUniqueName}</b
 						>
-					</li>
-				{/each}
-			{:else}
-				This player has no games yet
-			{/if}
+					</div>
+				</li>
+			{/each}
 		{:else}
-			loading games
+			This player has no games yet
 		{/if}
 	</ol>
 {/if}

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import Button from '$lib/components/Button.svelte';
+	import PageHeading from '$lib/components/PageHeading.svelte';
 	import { CollectionName, type Player } from '$lib/firebase/firebase-utils';
 	import { slugifyUserName } from '$lib/slugify';
 	import { runTransaction, collection, getFirestore, getDoc, doc } from '@firebase/firestore';
@@ -59,22 +61,33 @@
 	}
 
 	$: nameInputValue && handleUniqueNameChange(nameInputValue);
+	$: disabled = isTaken || !nameInputValue?.length || isLoading;
 </script>
 
-<h2>Add Player:</h2>
+<PageHeading>Add Player</PageHeading>
 
 {#if !success}
 	<form>
 		<div style="margin-bottom: 20px">
-			<label for="name">name</label>
-			<input bind:value={nameInputValue} type="text" id="name" name="name" />
+			<label for="name" class="font-bold">Name:</label>
+			<div>
+				<input
+					class="border-b-2 border-black p-3 w-full outline-none"
+					placeholder="John Doe"
+					bind:value={nameInputValue}
+					type="text"
+					id="name"
+					name="name"
+				/>
+			</div>
 		</div>
 
-		{#if isTaken}<div style="margin-bottom: 20px;">"{nameInputValue}" is already taken.</div> {/if}
+		{#if isTaken}<div class="my-5 text-red-500 font-bold text-center text-xl">
+				"{nameInputValue}" is already taken!
+			</div>
+		{/if}
 		<div>
-			<button on:click={onCreateUser} disabled={isTaken || !nameInputValue?.length || isLoading}
-				>Create</button
-			>
+			<Button onClick={onCreateUser} isDisabled={disabled}>Create</Button>
 		</div>
 	</form>
 {:else}

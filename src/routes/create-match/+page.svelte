@@ -3,6 +3,8 @@
 	import { onMount } from 'svelte';
 	import { getFirestore, collection, getDocs, runTransaction, doc } from '@firebase/firestore';
 	import { calcEloDeltasForPlayers } from '$lib/elo-utils';
+	import PageHeading from '$lib/components/PageHeading.svelte';
+	import Button from '$lib/components/Button.svelte';
 
 	let players: undefined | Player[];
 	let isLoading = false;
@@ -75,7 +77,7 @@
 			t.set(doc(userCollectionRef, loser.uniqueName), { elo: looserEloAfter }, { merge: true });
 			t.set(doc(userCollectionRef, winner.uniqueName), { elo: winnerEloAfter }, { merge: true });
 		})
-			.then((r) => {
+			.then(() => {
 				success = true;
 			})
 			.catch((e) => {
@@ -87,7 +89,7 @@
 	}
 </script>
 
-<h2>Record a Match:</h2>
+<PageHeading>Save Match</PageHeading>
 
 {#if players && !success}
 	<form>
@@ -105,14 +107,6 @@
 					<option value={player.uniqueName}>{player.displayName}</option>
 				{/each}
 			</select>
-			{#if selectedWinner && selectedLooser}
-				<span>
-					current elo: <b>{selectedWinner.elo}</b>. Delta +{calcEloDeltasForPlayers({
-						looserRating: selectedLooser.elo,
-						winnerRating: selectedWinner.elo
-					}).winnerChange} pts.
-				</span>
-			{/if}
 		</div>
 
 		<div style="margin-bottom: 20px;">
@@ -129,14 +123,6 @@
 					<option value={player.uniqueName}>{player.displayName}</option>
 				{/each}
 			</select>
-			{#if selectedLooser && selectedWinner}
-				<span>
-					current elo: <b>{selectedLooser.elo}</b>. Delta {calcEloDeltasForPlayers({
-						looserRating: selectedLooser.elo,
-						winnerRating: selectedWinner.elo
-					}).looserChange} pts.
-				</span>
-			{/if}
 		</div>
 
 		{#if error}
@@ -144,7 +130,13 @@
 		{/if}
 
 		<div style="margin: 50px 0; display: flex; justify-content: center;">
-			<button disabled={isLoading} on:click={onCreateMatch} type="submit">Save Match</button>
+			<Button isDisabled={isLoading || !selectedLooser || !selectedLooser} onClick={onCreateMatch}
+				>Save Match</Button
+			>
+		</div>
+
+		<div class="my-4 text-center">
+			<a class="text-center underline" href="/create-player">create new player</a>
 		</div>
 	</form>
 {/if}
