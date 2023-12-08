@@ -1,3 +1,7 @@
+<script context="module">
+	export const PLAYER_QUERY_PARAM_NAME = 'player-id';
+</script>
+
 <script lang="ts">
 	import { CollectionName, type Match, type Player } from '$lib/firebase/firebase-utils';
 	import { page } from '$app/stores';
@@ -15,7 +19,8 @@
 	import LoadingBox from '$lib/components/LoadingBox.svelte';
 	import PageHeading from '$lib/components/PageHeading.svelte';
 
-	$: uniqueName = $page.params.id;
+	// can't user page params - build will fail because of prerender = true
+	$: uniqueName = $page.url.searchParams.get(PLAYER_QUERY_PARAM_NAME);
 
 	let userDoc: undefined | Player | null;
 	let matches: undefined | Match[];

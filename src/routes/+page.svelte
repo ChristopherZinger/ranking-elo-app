@@ -5,6 +5,7 @@
 	import { goto } from '$app/navigation';
 	import PageHeading from '$lib/components/PageHeading.svelte';
 	import Button from '$lib/components/Button.svelte';
+	import { PLAYER_QUERY_PARAM_NAME } from './player/+page.svelte';
 
 	let playersWhoPlayed: undefined | Player[];
 	let playersWhoDidntPlay: undefined | Player[];
@@ -34,7 +35,7 @@
 	<div class="list-decimal flex flex-col gap-5">
 		{#each playersWhoPlayed as player, index}
 			<button
-				on:click={() => goto(`/player/${player.uniqueName}`)}
+				on:click={() => goto(`/player?${PLAYER_QUERY_PARAM_NAME}=${player.uniqueName}`)}
 				class="block text-left border-b-2 border-black"
 			>
 				<div>
