@@ -24,15 +24,15 @@
 	let isLoading = false;
 	let error: undefined | string;
 
-	function login() {
-		const auth = getAuth();
-		isLoading = true;
-		signInWithEmailAndPassword(auth, 'krzysztof.zinger@gmail.com', password)
-			.catch((err) => (error = err.message))
-			.finally(() => {
-				isLoading = false;
-			});
-	}
+	// function login() {
+	// 	const auth = getAuth();
+	// 	isLoading = true;
+	// 	signInWithEmailAndPassword(auth, 'krzysztof.zinger@gmail.com', password)
+	// 		.catch((err) => (error = err.message))
+	// 		.finally(() => {
+	// 			isLoading = false;
+	// 		});
+	// }
 
 	const auth = getAuth();
 	onAuthStateChanged(auth, (u) => {
@@ -41,33 +41,33 @@
 </script>
 
 <div style="margin:0 15px;">
-	<div style="margin: 0 auto; max-width: 300px; min-height: 100%;">
-		<Nav />
-		{#if user}
-			<slot />
-		{:else if user === null}
-			<PageHeading>Ping Poing</PageHeading>
-			<img class="rounded-md" src={imgSrc} alt="cat-plays-table-tennis" width="300px" />
-			<div style="margin: 15px 0;">
-				<input
-					class="p-2 border-b-2 border-black w-full outline-none"
-					name="password"
-					id="password"
-					placeholder="Password"
-					type="password"
-					bind:value={password}
-				/>
-			</div>
-			{#if error}
-				<div style="margin: 15px 0;">ERROR: {error}</div>
-			{/if}
-			<div>
-				<Button onClick={login} isDisabled={isLoading}>Enter</Button>
-			</div>
-		{:else}
-			<LoadingBox />
+	<!-- <div style="margin: 0 auto; max-width: 300px; min-height: 100%;"> -->
+	<Nav />
+	{#if user || true}
+		<slot />
+	{:else if user === null}
+		<PageHeading>Ping Poing</PageHeading>
+		<img class="rounded-md" src={imgSrc} alt="cat-plays-table-tennis" width="300px" />
+		<div style="margin: 15px 0;">
+			<input
+				class="p-2 border-b-2 border-black w-full outline-none"
+				name="password"
+				id="password"
+				placeholder="Password"
+				type="password"
+				bind:value={password}
+			/>
+		</div>
+		{#if error}
+			<div style="margin: 15px 0;">ERROR: {error}</div>
 		{/if}
-	</div>
+		<div>
+			<!-- <Button onClick={login} isDisabled={isLoading}>Enter</Button> -->
+		</div>
+	{:else}
+		<LoadingBox />
+	{/if}
+	<!-- </div> -->
 </div>
 
 <style>
