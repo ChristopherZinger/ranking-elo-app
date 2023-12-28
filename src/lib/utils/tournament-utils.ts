@@ -96,3 +96,206 @@ class Game {
 	}
 }
 
+class Tournament {
+	rounds: Game[][];
+	finalRematch: Game | null = null;
+
+	constructor(players: Player[]) {
+		this.rounds = [];
+
+		if (players.length < 2) {
+			throw new Error('need more than 2 players for tournament');
+		}
+
+		let numOfGamesInFirstRound = 0;
+		let exp = 1;
+		while (players.length > numOfGamesInFirstRound * 2) {
+			numOfGamesInFirstRound = Math.pow(2, exp);
+			exp++;
+		}
+
+		this.createPreviousRoundGames(numOfGamesInFirstRound);
+		this.setPlayers(players);
+	}
+
+	createPreviousRoundGames(numGamesInFirstRound: number, num: number = 1): [Game[], Game[] | null] {
+		if (num < 1 || num > numGamesInFirstRound) {
+			throw new RangeError('number out of range');
+		}
+
+		if (numGamesInFirstRound > num) {
+			const [prevWinnerGames, prevLoserGames] = this.createPreviousRoundGames(
+				numGamesInFirstRound,
+				num * 2
+			);
+			const nextWinnerGames: Game[] = [];
+			const nextSecondLoserGames: Game[] = [];
+			const nextFirstLoserGames: Game[] = [];
+
+			for (let i = 0; i < prevWinnerGames.length; i = i + 2) {
+				const prevWinnerGameA = prevWinnerGames[i];
+				const prevWinnerGameB = prevWinnerGames[i + 1];
+				const prevLoserGameA = prevLoserGames?.[i] || prevWinnerGameA;
+				const prevLoserGameB = prevLoserGames?.[i + 1] || prevWinnerGameB;
+
+				const winnerGame = new Game({
+					a: prevWinnerGameA,
+					b: prevWinnerGameB
+				});
+				const firstLoserGame = new Game({
+					a: prevLoserGameA,
+					b: prevLoserGameB
+				});
+				const secondLoserGame = new Game({
+					a: firstLoserGame,
+					b: winnerGame
+				});
+
+				firstLoserGame.nextGames = {
+					loser: null,
+					winner: secondLoserGame
+				};
+				prevWinnerGameA.nextGames = {
+					winner: winnerGame,
+					loser: prevLoserGames ? prevLoserGameA : firstLoserGame
+				};
+				prevWinnerGameB.nextGames = {
+					winner: winnerGame,
+					loser: prevLoserGames ? prevLoserGameB : firstLoserGame
+				};
+
+				if (prevLoserGames) {
+					prevLoserGameA.nextGames = {
+						loser: null,
+						winner: firstLoserGame
+					};
+
+					prevLoserGameB.nextGames = {
+						loser: null,
+						winner: firstLoserGame
+					};
+				}
+
+				nextFirstLoserGames.push(firstLoserGame);
+				nextSecondLoserGames.push(secondLoserGame);
+				nextWinnerGames.push(winnerGame);
+			}
+
+			this.rounds.push(nextWinnerGames);
+			this.rounds.unshift(nextFirstLoserGames);
+			this.rounds.unshift(nextSecondLoserGames);
+
+			// create finals
+			if (num === 1) {
+				const winnersBracketFinal = nextWinnerGames[0];
+				const losersBracketFinal = nextSecondLoserGames[0];
+
+				const final = new Game({
+					a: winnersBracketFinal,
+					b: losersBracketFinal
+				});
+
+				const finalRematch = new Game({
+					a: final,
+					b: final
+				});
+
+				winnersBracketFinal.nextGames = {
+					winner: final,
+					loser: losersBracketFinal
+				};
+
+				losersBracketFinal.nextGames = {
+					winner: final,
+					loser: null
+				};
+
+				final.nextGames = {
+					loser: finalRematch,
+					winner: finalRematch
+				};
+
+				this.finalRematch = finalRematch;
+				this.rounds.push([final], [finalRematch]);
+				return [[finalRematch], [final]];
+			}
+
+			return [nextWinnerGames, nextSecondLoserGames];
+		}
+
+		const firstRound = [];
+		for (let i = 0; i < num; i++) {
+			firstRound.push(new Game(null));
+		}
+		this.rounds.push(firstRound);
+
+		return [firstRound, null];
+	}
+
+	getFirstRound() {
+		if (!this.finalRematch) {
+			throw new Error('broken tournament structure');
+		}
+		const firstRound: Set<Game> = new Set();
+		function getParentGames(game: Game) {
+			if (game.previousGames) {
+				getParentGames(game.previousGames.a);
+				getParentGames(game.previousGames.b);
+			} else {
+				firstRound.add(game);
+			}
+		}
+		getParentGames(this.finalRematch);
+		return [...firstRound];
+	}
+
+	setPlayers(players: Player[]) {
+		const gamesInFirstRound = this.getFirstRound();
+		if (gamesInFirstRound.length % 2) {
+			throw new Error('even number of games in first round is required');
+		}
+
+		const playersBestToWorst = players.toSorted((a, b) => (a.rating > b.rating ? -1 : 1));
+		const bestHalfOfPlayersBestToWorst = playersBestToWorst.slice(0, gamesInFirstRound.length);
+		const worstHalfOrPlayersWorstToBest = playersBestToWorst
+			.slice(gamesInFirstRound.length)
+			.reverse();
+
+		function alternateTraversal<T>(
+			array: T[],
+			cb: (arrayItem: T, alternatingIndex: number, index: number) => void,
+			alternatingIndex = 0,
+			index = 0
+		) {
+			cb(array[alternatingIndex], alternatingIndex, index);
+
+			const step = array.length / 2;
+			const lastIndex = array.length - 1;
+			const nextStep = alternatingIndex + step;
+			const nextAlternatingIndex = nextStep > lastIndex ? nextStep - lastIndex : nextStep;
+
+			if (array[index]) {
+				alternateTraversal(array, cb, nextAlternatingIndex, index + 1);
+			}
+		}
+
+		alternateTraversal(gamesInFirstRound, (game, _, index) => {
+			const player = bestHalfOfPlayersBestToWorst[index];
+			if (player) {
+				game.addPlayer(player);
+			}
+		});
+
+		gamesInFirstRound.reverse();
+		alternateTraversal(gamesInFirstRound, (game, _, index) => {
+			const player = worstHalfOrPlayersWorstToBest[index];
+			if (player) {
+				game.addPlayer(player);
+			}
+		});
+	}
+}
+
+export function createTournament(players: Player[]) {
+	return new Tournament(players);
+}
