@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { Game, Player, createTournament } from '$lib/utils/tournament-utils';
-	import { compact } from 'lodash';
+	import { isDummyPlayer, Game, Player, createTournament } from '$lib/utils/tournament-utils';
 	import GameControlPanel from './GameControlPanel.svelte';
 	import TournamentGameCell from './TournamentGameCell.svelte';
 
@@ -72,17 +71,20 @@
 		selectedGame = nextGame;
 	}
 
-	function resolveGamesWithOnePlayerForRound(round: Game[]) {
-		console.log('resolve games with one player');
+	function resolveGamesWithDummyPlayer(round: Game[]) {
 		round.forEach((game) => {
-			const players = compact(Object.values(game.players || {}));
-			const winnerGamePlayers = compact(Object.values(game.nextGames?.winner.players || {}));
-			const loserGamePlayers = compact(Object.values(game.nextGames?.loser?.players || {}));
-			if (players.length === 1 && winnerGamePlayers.length < 2 && loserGamePlayers.length < 2) {
-				game.setGameResult(players[0]);
+			const { p1, p2 } = game.players || {};
+			const isDummyInGame = [p1, p2].some((p) => isDummyPlayer(p));
+
+			if (p1 && p2 && isDummyInGame) {
+				const winner = isDummyPlayer(p1) ? p2 : p1;
+				game.setGameResult(winner);
 				game.movePlayersToNextRound();
 			}
 		});
+		if (shouldMoveToNextRound(roundsInOrder[selectedRoundIndex])) {
+			selectedRoundIndex++;
+		}
 		forceRerender();
 	}
 
@@ -90,20 +92,26 @@
 		roundsInOrder = [...tournament.roundsInOrder];
 	}
 
-	$: resolveGamesWithOnePlayerForRound(roundsInOrder[selectedRoundIndex]);
+	function onSelectWinner(player: Player) {
+		selectedGame.setGameResult(player);
+		selectedGame.movePlayersToNextRound();
+		if (shouldMoveToNextRound(roundsInOrder[selectedRoundIndex])) {
+			selectedRoundIndex++;
+		}
+		forceRerender();
+	}
+
+	function shouldMoveToNextRound(gamesInCurrentRound: Game[]) {
+		return !gamesInCurrentRound.some((game) => game.results === null);
+	}
+
+	$: resolveGamesWithDummyPlayer(roundsInOrder[selectedRoundIndex]);
 	$: roundsInOrder = tournament.roundsInOrder;
 	$: roundsLeftToRight = getRoundsLeftToRight(roundsInOrder);
 </script>
 
 {#if selectedGame}
-	<GameControlPanel
-		onSelectWinner={(player) => {
-			selectedGame.setGameResult(player);
-			selectedGame.movePlayersToNextRound();
-			forceRerender();
-		}}
-		{selectedGame}
-	/>
+	<GameControlPanel {onSelectWinner} {selectedGame} />
 {/if}
 
 <div class="flex gap-2">
