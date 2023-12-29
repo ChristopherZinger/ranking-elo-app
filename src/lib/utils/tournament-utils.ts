@@ -2,7 +2,7 @@ export class Player {
 	constructor(public name: string, public rating: number) {}
 }
 
-class Game {
+export class Game {
 	players: {
 		p1: Player;
 		p2: Player | null;
@@ -30,13 +30,13 @@ class Game {
 
 	setGameResult(winner: Player) {
 		const _winner = Object.values(this.players || {}).find((player) => {
-			player === winner;
+			return player === winner;
 		});
 		const _looser = Object.values(this.players || {}).find((player) => {
-			player !== winner;
+			return player !== winner;
 		});
 		if (!_winner) {
-			throw 'this player is not part of this game';
+			throw new Error('selected player is not playing in this game');
 		}
 
 		this.results = {
@@ -50,16 +50,16 @@ class Game {
 			throw new Error('this game desnt have players');
 		}
 		if (!this.results) {
-			throw new Error('cant move to next round without a winner');
+			throw new Error('cant move players to next game before game result is set');
+		}
+		if (!this.nextGames) {
+			console.error('there are no next games');
+			return;
 		}
 
-		if (this.nextGames) {
-			this.nextGames.winner.addPlayer(this.results.winner);
-
-			const loser = this.results.winner === this.players.p1 ? this.players.p2 : this.players.p1;
-			if (loser && this.nextGames.loser) {
-				this.nextGames.loser.addPlayer(loser);
-			}
+		this.nextGames.winner.addPlayer(this.results.winner);
+		if (this.results.loser && this.nextGames.loser) {
+			this.nextGames.loser.addPlayer(this.results.loser);
 		}
 	}
 
@@ -78,30 +78,16 @@ class Game {
 			throw new Error('this game already have 2 players');
 		}
 	}
-
-	isFinalRematchGame(): boolean {
-		return (
-			this.nextGames === null &&
-			this.previousGames !== null &&
-			this.previousGames.a === this.previousGames.b
-		);
-	}
-
-	isFinalGame(): boolean {
-		return this.nextGames !== null && this.nextGames.loser === this.nextGames.winner;
-	}
-
-	isFirstRoundGame(): boolean {
-		return !this.previousGames;
-	}
 }
 
 class Tournament {
-	rounds: Game[][];
+	roundsInOrder: Game[][];
+	roundsLeftToRight: Game[][];
 	finalRematch: Game | null = null;
 
 	constructor(players: Player[]) {
-		this.rounds = [];
+		this.roundsLeftToRight = [];
+		this.roundsInOrder = [];
 
 		if (players.length < 2) {
 			throw new Error('need more than 2 players for tournament');
@@ -181,9 +167,11 @@ class Tournament {
 				nextWinnerGames.push(winnerGame);
 			}
 
-			this.rounds.push(nextWinnerGames);
-			this.rounds.unshift(nextFirstLoserGames);
-			this.rounds.unshift(nextSecondLoserGames);
+			this.roundsLeftToRight.push(nextWinnerGames);
+			this.roundsLeftToRight.unshift(nextFirstLoserGames);
+			this.roundsLeftToRight.unshift(nextSecondLoserGames);
+
+			this.roundsInOrder.push(nextWinnerGames, nextFirstLoserGames, nextSecondLoserGames);
 
 			// create finals
 			if (num === 1) {
@@ -216,7 +204,8 @@ class Tournament {
 				};
 
 				this.finalRematch = finalRematch;
-				this.rounds.push([final], [finalRematch]);
+				this.roundsLeftToRight.push([final], [finalRematch]);
+				this.roundsInOrder.push([final], [finalRematch]);
 				return [[finalRematch], [final]];
 			}
 
@@ -227,12 +216,13 @@ class Tournament {
 		for (let i = 0; i < num; i++) {
 			firstRound.push(new Game(null));
 		}
-		this.rounds.push(firstRound);
+		this.roundsLeftToRight.push(firstRound);
+		this.roundsInOrder.push(firstRound);
 
 		return [firstRound, null];
 	}
 
-	getFirstRound() {
+	getFirstRound(): Game[] {
 		if (!this.finalRematch) {
 			throw new Error('broken tournament structure');
 		}
