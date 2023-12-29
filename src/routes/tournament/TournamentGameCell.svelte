@@ -1,11 +1,25 @@
 <script lang="ts">
-	import type { Game } from '$lib/utils/tournament-utils';
+	import { isDummyPlayer, type Game, Player } from '$lib/utils/tournament-utils';
 
-	export let game: Game;
+	export let players: {
+		p1: Player;
+		p2: Player | null;
+	} | null;
+	export let isSelectable: boolean;
 	export let isSelected: boolean;
 	export let onClick: () => void;
 
-	$: isSelectable = !game.results && game.players?.p1 && game.players?.p2;
+	$: hasDummyPlayer = Object.values(players || {}).some((p) => isDummyPlayer(p));
+
+	function getPlayerDisplayName(player: Player | null, hasDummyPlayer: boolean) {
+		if (hasDummyPlayer) {
+			return '-';
+		}
+		if (!player) {
+			return '?';
+		}
+		return player.name;
+	}
 </script>
 
 <div
@@ -14,8 +28,8 @@
 	on:click={() => isSelectable && onClick()}
 	class:isSelectable
 >
-	<div class="px-2 bg-slate-50">{game.players?.p1.name || '-'}</div>
-	<div class="px-2 bg-slate-200">{game.players?.p2?.name || '-'}</div>
+	<div class="px-2 bg-slate-50">{getPlayerDisplayName(players?.p1 || null, hasDummyPlayer)}</div>
+	<div class="px-2 bg-slate-200">{getPlayerDisplayName(players?.p2 || null, hasDummyPlayer)}</div>
 </div>
 
 <style>

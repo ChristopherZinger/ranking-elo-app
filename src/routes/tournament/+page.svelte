@@ -124,8 +124,9 @@
 			>
 				{#each round as game}
 					<TournamentGameCell
-						{game}
+						players={game.players}
 						isSelected={game === selectedGame}
+						isSelectable={Boolean(!game.results && game.players?.p1 && game.players?.p2)}
 						onClick={() => onSelectGame(game)}
 					/>
 				{/each}
