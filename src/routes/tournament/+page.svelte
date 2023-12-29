@@ -18,7 +18,6 @@
 
 	const tournament = createTournament(players);
 	let selectedRoundIndex = 0;
-	let selectedGame = tournament.getFirstRound()[0];
 
 	function getRoundsLeftToRight(roundsInOrder: Game[][]): Game[][] {
 		const result: Game[][] = [roundsInOrder[0]];
@@ -45,30 +44,34 @@
 		selectedGame = game;
 	}
 
-	function onSelectNextGameInCurrentRound() {
+	function getNextGameInCurrentRound(game: Game, skipSelectedGame = true): Game {
 		const currentRound = roundsInOrder[selectedRoundIndex];
-		if (!currentRound) {
-			console.error('cant find current round');
-			return;
+		if (!currentRound.includes(game)) {
+			throw new Error('previous game is not in this round');
 		}
 
-		let index = currentRound.indexOf(selectedGame);
+		let index = currentRound.indexOf(game);
 		let nextGame: Game | undefined = undefined;
 
-		while (!nextGame) {
+		if (skipSelectedGame) {
 			index++;
+		}
+
+		while (!nextGame) {
 			if (index > currentRound.length - 1) {
 				index = 0;
 			}
 			const game = currentRound[index];
-			const hasBothPlayers = game.players?.p1 && game.players.p2;
+			const hasNonDummyPlayers =
+				!isDummyPlayer(game.players?.p1) && !isDummyPlayer(game.players?.p2);
 			const hasNoResult = !game.results;
-			if (hasBothPlayers && hasNoResult) {
+			if (hasNonDummyPlayers && hasNoResult) {
 				nextGame = game;
 			}
+			index++;
 		}
 
-		selectedGame = nextGame;
+		return nextGame;
 	}
 
 	function resolveGamesWithDummyPlayer(round: Game[]) {
@@ -108,6 +111,7 @@
 	$: resolveGamesWithDummyPlayer(roundsInOrder[selectedRoundIndex]);
 	$: roundsInOrder = tournament.roundsInOrder;
 	$: roundsLeftToRight = getRoundsLeftToRight(roundsInOrder);
+	$: selectedGame = getNextGameInCurrentRound(roundsInOrder[selectedRoundIndex][0], false);
 </script>
 
 {#if selectedGame}
