@@ -1,6 +1,21 @@
 import { compact } from 'lodash';
 
-export class Player {
+interface PlayerI {
+	name: string;
+	rating: number;
+}
+
+class DummyPlayer implements PlayerI {
+	constructor(public name: string, public rating: number) {}
+}
+function getNewDummyPlayer() {
+	return new DummyPlayer('Dummy', 0);
+}
+export function isDummyPlayer(p: unknown): p is DummyPlayer {
+	return p instanceof DummyPlayer;
+}
+
+export class Player implements PlayerI {
 	constructor(public name: string, public rating: number) {}
 }
 
@@ -59,13 +74,13 @@ export class Game {
 			return;
 		}
 
-		this.nextGames.winner.addPlayer(this.results.winner);
+		this.nextGames.winner.addPlayerIfNotInTheGameAlready(this.results.winner);
 		if (this.results.loser && this.nextGames.loser) {
-			this.nextGames.loser.addPlayer(this.results.loser);
+			this.nextGames.loser.addPlayerIfNotInTheGameAlready(this.results.loser);
 		}
 	}
 
-	addPlayer(player: Player) {
+	addPlayerIfNotInTheGameAlready(player: Player) {
 		const isAlreadyInThisGame = compact(Object.values(this.players || {})).includes(player);
 		if (isAlreadyInThisGame) {
 			return;
@@ -269,16 +284,17 @@ class Tournament {
 			const lastIndex = array.length - 1;
 			const nextStep = alternatingIndex + step;
 			const nextAlternatingIndex = nextStep > lastIndex ? nextStep - lastIndex : nextStep;
+			const nextIndex = index + 1;
 
-			if (array[index]) {
-				alternateTraversal(array, cb, nextAlternatingIndex, index + 1);
+			if (array[nextIndex]) {
+				alternateTraversal(array, cb, nextAlternatingIndex, nextIndex);
 			}
 		}
 
 		alternateTraversal(gamesInFirstRound, (game, _, index) => {
 			const player = bestHalfOfPlayersBestToWorst[index];
 			if (player) {
-				game.addPlayer(player);
+				game.addPlayerIfNotInTheGameAlready(player);
 			}
 		});
 
@@ -286,7 +302,9 @@ class Tournament {
 		alternateTraversal(gamesInFirstRound, (game, _, index) => {
 			const player = worstHalfOrPlayersWorstToBest[index];
 			if (player) {
-				game.addPlayer(player);
+				game.addPlayerIfNotInTheGameAlready(player);
+			} else {
+				game.addPlayerIfNotInTheGameAlready(getNewDummyPlayer());
 			}
 		});
 	}
