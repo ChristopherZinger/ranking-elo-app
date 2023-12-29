@@ -1,3 +1,5 @@
+import { compact } from 'lodash';
+
 export class Player {
 	constructor(public name: string, public rating: number) {}
 }
@@ -64,6 +66,10 @@ export class Game {
 	}
 
 	addPlayer(player: Player) {
+		const isAlreadyInThisGame = compact(Object.values(this.players || {})).includes(player);
+		if (isAlreadyInThisGame) {
+			return;
+		}
 		if (!this.players) {
 			this.players = {
 				p1: player,
