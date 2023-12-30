@@ -108,6 +108,25 @@
 		return !gamesInCurrentRound.some((game) => game.results === null);
 	}
 
+	function getRoundDisplayName(round: Game[]): null | string {
+		const index = roundsInOrder.indexOf(round);
+
+		if (index === -1) {
+			return null;
+		}
+
+		if (round.length === 1) {
+			const game = round[0];
+			if (game.previousGames && game.previousGames.a === game.previousGames.b) {
+				return 'Rematch';
+			} else if (game.nextGames && game.nextGames.winner === game.nextGames.loser) {
+				return 'Final';
+			}
+		}
+
+		return 'Round: ' + (index + 1);
+	}
+
 	$: resolveGamesWithDummyPlayer(roundsInOrder[selectedRoundIndex]);
 	$: roundsInOrder = tournament.roundsInOrder;
 	$: roundsLeftToRight = getRoundsLeftToRight(roundsInOrder);
@@ -121,7 +140,12 @@
 <div class="flex gap-2">
 	{#each roundsLeftToRight as round}
 		<div class="flex flex-col">
-			<div>Round: {roundsInOrder.indexOf(round)}</div>
+			<div
+				class:isSelected={tournament.roundsInOrder[selectedRoundIndex] === round}
+				class="mb-1 rounded-lg px-2 py-1"
+			>
+				{getRoundDisplayName(round)}
+			</div>
 			<div
 				class="flex flex-col grow justify-around gap-4 p-1 rounded-lg"
 				class:isSelected={tournament.roundsInOrder[selectedRoundIndex] === round}
