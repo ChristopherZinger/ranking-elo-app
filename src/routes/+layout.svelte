@@ -41,7 +41,8 @@
 </script>
 
 <div style="margin:0 15px;">
-	<div style="margin: 0 auto; max-width: 300px; min-height: 100%;">
+	<!-- <div style="margin: 0 auto; max-width: 300px; min-height: 100%;"> -->
+	<div>
 		<Nav />
 		{#if user}
 			<slot />

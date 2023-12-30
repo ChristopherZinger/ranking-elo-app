@@ -45,6 +45,16 @@ export class Game {
 		} | null = null
 	) {}
 
+	expectGameResults(): {
+		winner: Player;
+		loser: Player | null;
+	} {
+		if (!this.results) {
+			throw new Error('missing game results when expected');
+		}
+		return this.results;
+	}
+
 	setGameResult(winner: Player) {
 		const _winner = Object.values(this.players || {}).find((player) => {
 			return player === winner;
@@ -101,7 +111,7 @@ export class Game {
 	}
 }
 
-class Tournament {
+export class Tournament {
 	roundsInOrder: Game[][];
 	roundsLeftToRight: Game[][];
 	finalRematch: Game | null = null;
@@ -308,6 +318,29 @@ class Tournament {
 			}
 		});
 	}
+}
+export function didPlayerLostGameBeforeGame(player: Player, game: Game) {
+	if (!game.results) {
+		throw new Error('expected game with results');
+	}
+
+	if (game.results.winner !== player) {
+		return true;
+	}
+
+	if (!game.previousGames) {
+		return false;
+	}
+
+	const prevGameWithPlayer = Object.values(game.previousGames).find((game) => {
+		return Object.values(game.players || {}).includes(player);
+	});
+
+	if (!prevGameWithPlayer) {
+		throw new Error('expected previous game with player');
+	}
+
+	return didPlayerLostGameBeforeGame(player, prevGameWithPlayer);
 }
 
 export function createTournament(players: Player[]) {

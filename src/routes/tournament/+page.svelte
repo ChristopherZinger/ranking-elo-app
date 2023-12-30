@@ -1,5 +1,11 @@
 <script lang="ts">
-	import { isDummyPlayer, Game, Player, createTournament } from '$lib/utils/tournament-utils';
+	import {
+		isDummyPlayer,
+		Game,
+		Player,
+		createTournament,
+		didPlayerLostGameBeforeGame
+	} from '$lib/utils/tournament-utils';
 	import GameControlPanel from './GameControlPanel.svelte';
 	import TournamentGameCell from './TournamentGameCell.svelte';
 
@@ -75,6 +81,7 @@
 	}
 
 	function resolveGamesWithDummyPlayer(round: Game[]) {
+		console.log('resolve dummy');
 		round.forEach((game) => {
 			const { p1, p2 } = game.players || {};
 			const isDummyInGame = [p1, p2].some((p) => isDummyPlayer(p));
@@ -85,28 +92,67 @@
 				game.movePlayersToNextRound();
 			}
 		});
-		if (shouldMoveToNextRound(roundsInOrder[selectedRoundIndex])) {
-			selectedRoundIndex++;
-		}
 		forceRerender();
 	}
+	$: resolveGamesWithDummyPlayer(roundsInOrder[selectedRoundIndex]);
 
 	function forceRerender() {
+		console.log('refresh');
 		roundsInOrder = [...tournament.roundsInOrder];
 	}
 
 	function onSelectWinner(player: Player) {
+		console.log('set result');
 		selectedGame.setGameResult(player);
 		selectedGame.movePlayersToNextRound();
-		if (shouldMoveToNextRound(roundsInOrder[selectedRoundIndex])) {
-			selectedRoundIndex++;
-		}
 		forceRerender();
 	}
 
-	function shouldMoveToNextRound(gamesInCurrentRound: Game[]) {
-		return !gamesInCurrentRound.some((game) => game.results === null);
+	function moveToNextRoundIfNecessary(currentRound: Game[]) {
+		console.log('eval');
+		const areUnresolvedGamesInRound = currentRound.some((game) => game.results === null);
+		if (areUnresolvedGamesInRound) {
+			return;
+		}
+
+		const isFinalRematchRound = currentRound.length === 1 && !currentRound[0].nextGames;
+		if (isFinalRematchRound) {
+			return;
+		}
+
+		const isFinalRound =
+			currentRound.length === 1 &&
+			currentRound[0].nextGames &&
+			currentRound[0].nextGames.loser === currentRound[0].nextGames.winner;
+
+		let isRematchRequired = false;
+		if (isFinalRound) {
+			const { p1, p2 } = currentRound[0].players || {};
+			if (!p1 || !p2) {
+				throw new Error('one or more players missing in the game when expected');
+			}
+			const finalGame = currentRound[0];
+			const hasP1Lost = didPlayerLostGameBeforeGame(p1, finalGame);
+			const hasP2Lost = didPlayerLostGameBeforeGame(p1, finalGame);
+
+			if (hasP2Lost && hasP1Lost) {
+				isRematchRequired = true;
+			}
+		}
+
+		if (isFinalRound && !isRematchRequired) {
+			return;
+		}
+
+		console.log('final: ', isFinalRound);
+		console.log('is final rematch: ', isFinalRematchRound);
+		console.log('is rematch required: ', isRematchRequired);
+		console.log('---------------');
+
+		selectedRoundIndex++;
+		forceRerender();
 	}
+	$: moveToNextRoundIfNecessary(roundsInOrder[selectedRoundIndex]);
 
 	function getRoundDisplayName(round: Game[]): null | string {
 		const index = roundsInOrder.indexOf(round);
@@ -127,7 +173,6 @@
 		return 'Round: ' + (index + 1);
 	}
 
-	$: resolveGamesWithDummyPlayer(roundsInOrder[selectedRoundIndex]);
 	$: roundsInOrder = tournament.roundsInOrder;
 	$: roundsLeftToRight = getRoundsLeftToRight(roundsInOrder);
 	$: selectedGame = getNextGameInCurrentRound(roundsInOrder[selectedRoundIndex][0], false);
