@@ -109,6 +109,22 @@ export class Game {
 			throw new Error('this game already have 2 players');
 		}
 	}
+
+	isFinalGame(): boolean {
+		return !!this.nextGames && this.nextGames.loser === this.nextGames.winner;
+	}
+
+	isFinalRematchGame(): boolean {
+		return !this.nextGames && !!this.previousGames && this.previousGames.a === this.previousGames.b;
+	}
+
+	expectPlayers(): { p1: Player; p2: Player } {
+		const { p1, p2 } = this.players || {};
+		if (!p1 || !p2) {
+			throw new Error('one or more players missing in the game when expected');
+		}
+		return { p1, p2 };
+	}
 }
 
 export class Tournament {
@@ -318,29 +334,6 @@ export class Tournament {
 			}
 		});
 	}
-}
-export function didPlayerLostGameBeforeGame(player: Player, game: Game) {
-	if (!game.results) {
-		throw new Error('expected game with results');
-	}
-
-	if (game.results.winner !== player) {
-		return true;
-	}
-
-	if (!game.previousGames) {
-		return false;
-	}
-
-	const prevGameWithPlayer = Object.values(game.previousGames).find((game) => {
-		return Object.values(game.players || {}).includes(player);
-	});
-
-	if (!prevGameWithPlayer) {
-		throw new Error('expected previous game with player');
-	}
-
-	return didPlayerLostGameBeforeGame(player, prevGameWithPlayer);
 }
 
 export function createTournament(players: Player[]) {
