@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { isDummyPlayer, type Game, Player } from '$lib/utils/tournament-utils';
+	import { isDummyPlayer, Player } from '$lib/utils/tournament-utils';
 
 	export let players: {
 		p1: Player;
@@ -13,7 +13,7 @@
 
 	function getPlayerDisplayName(player: Player | null, hasDummyPlayer: boolean) {
 		if (hasDummyPlayer) {
-			return '-';
+			return '&nbsp';
 		}
 		if (!player) {
 			return '?';
@@ -27,9 +27,12 @@
 	class="game rounded-md overflow-hidden"
 	on:click={() => isSelectable && onClick()}
 	class:isSelectable
+	class:isHidden={hasDummyPlayer}
 >
-	<div class="px-2 bg-slate-50">{getPlayerDisplayName(players?.p1 || null, hasDummyPlayer)}</div>
-	<div class="px-2 bg-slate-200">{getPlayerDisplayName(players?.p2 || null, hasDummyPlayer)}</div>
+	<div class="px-2 bg-white">{@html getPlayerDisplayName(players?.p1 || null, hasDummyPlayer)}</div>
+	<div class="px-2 bg-slate-200">
+		{@html getPlayerDisplayName(players?.p2 || null, hasDummyPlayer)}
+	</div>
 </div>
 
 <style>
